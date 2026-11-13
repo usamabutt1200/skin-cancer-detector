@@ -4,11 +4,11 @@ import streamlit as st
 import tensorflow as tf
 from matplotlib import colormaps
 from PIL import Image
-
+ 
 st.set_page_config(page_title="SkinScan AI", page_icon="🩺", layout="centered")
 THRESHOLD = 0.3
-
-st.markdown("""
+ 
+CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
 html, body, [class*="css"], .stApp { font-family: 'DM Sans', sans-serif; }
@@ -34,22 +34,23 @@ html, body, [class*="css"], .stApp { font-family: 'DM Sans', sans-serif; }
 [data-testid="stImage"] img { border-radius: 14px; }
 button[data-baseweb="tab"] { font-weight: 500; }
 </style>
-""", unsafe_allow_html=True)
-
-
+"""
+st.markdown(CSS, unsafe_allow_html=True)
+ 
+ 
 @st.cache_resource
 def load_model():
     return tf.keras.models.load_model("skin_cancer_final.keras")
-
-
+ 
+ 
 model = load_model()
-
-
+ 
+ 
 def predict(img):
     arr = np.array(img.resize((224, 224)), dtype=np.float32)[None, ...]
     return arr, float(model.predict(arr, verbose=0)[0][0])
-
-
+ 
+ 
 def gradcam(arr):
     base = model.get_layer("efficientnetb0")
     head = model.get_layer("dense")
@@ -62,16 +63,127 @@ def gradcam(arr):
     w = tf.reduce_mean(grads, axis=(1, 2))
     cam = tf.nn.relu(tf.reduce_sum(conv * w[:, None, None, :], axis=-1))[0].numpy()
     return cam / (cam.max() + 1e-8)
-
-
+ 
+ 
 def overlay(img, cam, alpha=0.45):
     heat = Image.fromarray(np.uint8(cam * 255)).resize(img.size, Image.BICUBIC)
     rgb = (colormaps["jet"](np.array(heat) / 255.0)[..., :3] * 255).astype(np.uint8)
     heat_img = Image.fromarray(rgb)
     return heat_img, Image.blend(img, heat_img, alpha)
-
-
-st.markdown("""
-<div class="hero">
-  <h1>SkinScan AI</h1>
-  <p>Upload a close-up photo of a skin
+ 
+ 
+HERO = (
+    '<div class="hero">'
+    "<h1>SkinScan AI</h1>"
+    "<p>Upload a close-up photo of a skin lesion to get an AI screening result, "
+    "a heatmap of what the model focused on, and performance insights.</p>"
+    "</div>"
+)
+st.markdown(HERO, unsafe_allow_html=True)
+ 
+file = st.file_uploader(
+    "Upload a skin lesion image",
+    type=["jpg", "jpeg", "png"],
+    label_visibility="collapsed",
+)
+ 
+img = None
+p = None
+cam = None
+if file:
+    img = Image.open(file).convert("RGB")
+    with st.spinner("Analyzing image..."):
+        arr, p = predict(img)
+        cam = gradcam(arr)
+ 
+tab1, tab2, tab3, tab4 = st.tabs(["Screening", "Heatmap", "Model insights", "About"])
+ 
+with tab1:
+    if img is None:
+        st.markdown(
+            '<div class="card"><p class="verdict">Ready when you are</p>'
+            '<p class="sub" style="margin:0">Upload a clear, well-lit JPG or PNG to begin.</p></div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.image(img, use_container_width=True)
+        malignant = p > THRESHOLD
+        color = "#C2410C" if malignant else "#1F8A5B"
+        verdict = "Likely malignant" if malignant else "Likely benign"
+        if malignant:
+            advice = "This lesion shows features linked to malignancy. Please consult a dermatologist."
+        else:
+            advice = "No strong signs of malignancy were detected. Keep monitoring any changes."
+ 
+        card = (
+            '<div class="card">'
+            f'<p class="verdict" style="color:{color}">{verdict}</p>'
+            f'<p class="sub">{advice}</p>'
+            '<div class="track">'
+            f'<div class="fill" style="width:{p * 100:.1f}%; background:{color}"></div>'
+            f'<div class="mark" style="left:{THRESHOLD * 100:.0f}%"></div>'
+            "</div>"
+            '<div class="scale"><span>0%</span>'
+            f"<span>Malignancy score: {p:.1%}</span><span>100%</span></div>"
+            f'<p class="note">The dark line marks the alert threshold ({THRESHOLD:.0%}). '
+            "For education and screening support only, not a medical diagnosis.</p>"
+            "</div>"
+        )
+        st.markdown(card, unsafe_allow_html=True)
+ 
+        st.markdown("##### Class probabilities")
+        st.bar_chart(
+            pd.DataFrame({"Probability": [1 - p, p]}, index=["Benign", "Malignant"]),
+            horizontal=True,
+        )
+ 
+with tab2:
+    if img is None:
+        st.info("Upload an image above to see the heatmap.")
+    else:
+        heat_img, mix = overlay(img, cam)
+        c1, c2, c3 = st.columns(3)
+        c1.image(img, caption="Original", use_container_width=True)
+        c2.image(heat_img, caption="Heatmap", use_container_width=True)
+        c3.image(mix, caption="Overlay", use_container_width=True)
+        st.caption(
+            "Warm colors (red, yellow) show regions that pushed the model most toward "
+            "'malignant'. Heatmaps explain model attention, not a diagnosis, and can "
+            "sometimes highlight skin or background instead of the lesion."
+        )
+ 
+with tab3:
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Test accuracy", "90%")
+    m2.metric("Malignant recall", "92%", help="At threshold 0.3")
+    m3.metric("Test images", "1,000")
+    st.markdown("##### Threshold trade-off (test set)")
+    df = pd.DataFrame(
+        {
+            "Threshold": ["0.50", "0.40", "0.30", "0.25"],
+            "Malignant recall": [0.88, 0.90, 0.92, 0.92],
+            "Benign recall": [0.92, 0.91, 0.87, 0.85],
+        }
+    ).set_index("Threshold")
+    st.line_chart(df)
+    st.caption(
+        "Lowering the threshold catches more malignant cases but raises false alarms. "
+        "This app uses 0.30."
+    )
+ 
+with tab4:
+    st.markdown("**How it works**")
+    st.write(
+        "A pretrained EfficientNetB0 network was fine-tuned on about 9,600 labeled images "
+        "of benign and malignant skin lesions, then tested on 1,000 separate images."
+    )
+    st.markdown("**Limits**")
+    st.write(
+        "The model was trained on one public dataset. Photos from other cameras, lighting "
+        "or skin tones may give weaker results."
+    )
+    st.markdown("**Disclaimer**")
+    st.write(
+        "SkinScan AI is a learning project. It is not a medical device and cannot replace "
+        "a dermatologist."
+    )
