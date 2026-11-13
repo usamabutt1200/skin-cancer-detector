@@ -32,13 +32,12 @@ html, body, [class*="css"], .stApp { font-family: 'DM Sans', sans-serif; }
 [data-testid="stFileUploader"] section { background: #fff; border: 2px dashed #9DB9C2;
         border-radius: 16px; }
 [data-testid="stImage"] img { border-radius: 14px; }
-[data-baseweb="tab-list"] { gap: 2rem !important; border-bottom: 1px solid #B8C9D0 !important; }
-[data-baseweb="tab-border"] { background-color: #B8C9D0 !important; }
-[data-baseweb="tab-highlight"] { background-color: #0A5F67 !important; height: 4px !important; border-radius: 3px 3px 0 0 !important; }
-button[role="tab"] { padding: 0.9rem 0.2rem !important; background: transparent !important; }
-button[role="tab"] p { font-size: 1.02rem !important; font-weight: 600 !important; color: #1F3A4D !important; }
-button[role="tab"]:hover p { color: #0A5F67 !important; }
-button[role="tab"][aria-selected="true"] p { color: #0A5F67 !important; font-weight: 700 !important; }
+[data-baseweb="tab-list"] { gap: 10px !important; border-bottom: none !important; background: transparent !important; padding: 0 !important; }
+[data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
+button[role="tab"] { background: #0F2A3D !important; border: none !important; border-radius: 10px !important; padding: 0.7rem 1.5rem !important; height: auto !important; transition: background .2s ease; }
+button[role="tab"] p { color: #FFFFFF !important; font-weight: 600 !important; font-size: 1rem !important; }
+button[role="tab"]:hover { background: #1D4A5E !important; }
+button[role="tab"][aria-selected="true"] { background: #0E7C86 !important; box-shadow: 0 4px 12px rgba(14,124,134,.4) !important; }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -193,4 +192,3 @@ with tab4:
         "SkinScan AI is a learning project. It is not a medical device and cannot replace "
         "a dermatologist."
     )
- 
