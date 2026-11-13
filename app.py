@@ -32,14 +32,13 @@ html, body, [class*="css"], .stApp { font-family: 'DM Sans', sans-serif; }
 [data-testid="stFileUploader"] section { background: #fff; border: 2px dashed #9DB9C2;
         border-radius: 16px; }
 [data-testid="stImage"] img { border-radius: 14px; }
-[data-baseweb="tab-list"] { gap: 8px; background: #E4ECEF; padding: 6px; border-radius: 14px; }
-[data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
-button[role="tab"] { flex: 1; justify-content: center; height: 44px; border-radius: 10px;
-        background: transparent; font-weight: 500; transition: all .2s ease; }
-button[role="tab"]:hover { background: rgba(14,124,134,.12); }
-button[role="tab"][aria-selected="true"] { background: #0E7C86 !important;
-        box-shadow: 0 4px 12px rgba(14,124,134,.35); }
-button[role="tab"][aria-selected="true"] * { color: #FFFFFF !important; }
+[data-baseweb="tab-list"] { gap: 2rem !important; border-bottom: 1px solid #DCE6E9 !important; }
+[data-baseweb="tab-border"] { background-color: #DCE6E9 !important; }
+[data-baseweb="tab-highlight"] { background-color: #0E7C86 !important; height: 3px !important; border-radius: 3px 3px 0 0 !important; }
+button[role="tab"] { padding: 0.9rem 0.2rem !important; background: transparent !important; }
+button[role="tab"] p { font-size: 1.02rem !important; font-weight: 500 !important; color: #5B7080 !important; }
+button[role="tab"]:hover p { color: #0F2A3D !important; }
+button[role="tab"][aria-selected="true"] p { color: #0E7C86 !important; font-weight: 700 !important; }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -103,7 +102,7 @@ if file:
         arr, p = predict(img)
         cam = gradcam(arr)
  
-tab1, tab2, tab3, tab4 = st.tabs(["🔍 Screening", "🔥 Heatmap", "📊 Insights", "ℹ️ About"])
+tab1, tab2, tab3, tab4 = st.tabs(["Screening", "Heatmap", "Insights", "About"])
  
 with tab1:
     if img is None:
