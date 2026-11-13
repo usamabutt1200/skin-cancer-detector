@@ -32,7 +32,14 @@ html, body, [class*="css"], .stApp { font-family: 'DM Sans', sans-serif; }
 [data-testid="stFileUploader"] section { background: #fff; border: 2px dashed #9DB9C2;
         border-radius: 16px; }
 [data-testid="stImage"] img { border-radius: 14px; }
-button[data-baseweb="tab"] { font-weight: 500; }
+div[data-baseweb="tab-list"] { gap: 8px; background: #E4ECEF; padding: 6px; border-radius: 14px; }
+div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] { display: none; }
+button[data-baseweb="tab"] { flex: 1; justify-content: center; height: 44px; border-radius: 10px;
+        background: transparent; font-weight: 500; transition: all .2s ease; }
+button[data-baseweb="tab"]:hover { background: rgba(14,124,134,.12); }
+button[data-baseweb="tab"][aria-selected="true"] { background: #0E7C86;
+        box-shadow: 0 4px 12px rgba(14,124,134,.35); }
+button[data-baseweb="tab"][aria-selected="true"] p { color: #fff; }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
